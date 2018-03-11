@@ -92,8 +92,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     }
 
 
-    float delta_t = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
-
     /*****************************************************************************
      *  Prediction
      ****************************************************************************/
@@ -107,6 +105,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     float noise_ax = 9;
     float noise_ay = 9;
+
+    /*
     auto acceleration_covariance_A = MatrixXd(2,2);
     acceleration_covariance_A << noise_ax, 0,
                                  0, noise_ay;
@@ -120,20 +120,29 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     auto g_trans = g.transpose();
 
 
-    auto noise_covariance_Q = g * acceleration_covariance_A * g_trans;
+    MatrixXd noise_covariance_Q = g * acceleration_covariance_A * g_trans;
+    */
 
+    float dt_2 = dt * dt;
+    float dt_3 = dt_2 * dt;
+    float dt_4 = dt_3 * dt;
 
-    /*
+    MatrixXd noise_covariance_Q = MatrixXd(4,4);
+
     noise_covariance_Q <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
                             0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
                             dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
                             0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
-    */
+
 
     ekf_.Q_ = noise_covariance_Q;
 
 
     ekf_.Predict();
+    cout << "After prediction:" << endl;
+    cout << "x_ = " << ekf_.x_ << endl;
+    cout << "P_ = " << ekf_.P_ << endl;
+
 
     /*****************************************************************************
      *  Update
@@ -155,6 +164,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     }
 
     // print the output
+    cout << "After update:" << endl;
     cout << "x_ = " << ekf_.x_ << endl;
     cout << "P_ = " << ekf_.P_ << endl;
 }

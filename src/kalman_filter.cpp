@@ -1,5 +1,7 @@
 #include "kalman_filter.h"
+#include <iostream>
 
+using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
@@ -18,20 +20,29 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in) {
 void KalmanFilter::Predict() {
 
     x_ = F_ * x_;
-    auto Ft = F_.transpose();
+    MatrixXd Ft = F_.transpose();
     P_ = F_ * P_ * Ft + Q_;
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
 
+    cout << "z: " << z << endl;
+
     // calculate Kalman gain
-    auto z_pred = H_ * x_;
-    auto y = z - z_pred;
-    auto Ht = H_.transpose();
-    auto S = H_ * P_ * Ht + R_;
-    auto Si = S.inverse();
-    auto PHt = P_ * Ht;
-    auto K = PHt * Si;
+    VectorXd z_pred = H_ * x_;
+    cout << "z_pred: " << z_pred << endl;
+
+    VectorXd y = z - z_pred;
+    cout << "y: " << y << endl;
+
+    MatrixXd Ht = H_.transpose();
+    MatrixXd S = H_ * P_ * Ht + R_;
+    MatrixXd Si = S.inverse();
+    MatrixXd PHt = P_ * Ht;
+    MatrixXd K = PHt * Si;
+
+    cout << "Kalman gain: " << K << endl;
+
 
     //new estimate
     x_ = x_ + (K * y);
