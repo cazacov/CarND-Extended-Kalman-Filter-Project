@@ -55,13 +55,13 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
     cout << "UpdateEKF" << endl;
 
-    float px = x_[0];
-    float py = x_[1];
-    float pvx = x_[2];
-    float pvy = x_[3];
+    float px = x_(0);
+    float py = x_(1);
+    float pvx = x_(2);
+    float pvy = x_(3);
 
     float rho = sqrt(px*px + py * py);
-    float theta = atan(py / px);
+    float theta = atan2(py, px);
     float drho = (px*pvx + py * pvy) / sqrt(px*px + py*py);
 
     // normalize angle

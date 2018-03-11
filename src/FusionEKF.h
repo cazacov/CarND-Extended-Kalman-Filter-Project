@@ -45,6 +45,8 @@ private:
     Eigen::MatrixXd H_laser_;
     Eigen::MatrixXd Hj_;
     Eigen::MatrixXd A_covariance_;
+
+    long iteration;
 };
 
 #endif /* FusionEKF_H_ */

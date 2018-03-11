@@ -15,6 +15,7 @@ FusionEKF::FusionEKF() {
     is_initialized_ = false;
 
     previous_timestamp_ = 0;
+    iteration = 0;
 
     // initializing matrices
     R_laser_ = MatrixXd(2, 2);
@@ -98,6 +99,11 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
         return;
     }
 
+    iteration++;
+
+    cout << iteration << " ----------------" << endl;
+    cout << (measurement_pack.sensor_type_ == MeasurementPackage::RADAR ? "radar " : "laser ") << measurement_pack.raw_measurements_<< endl;
+
 
     /*****************************************************************************
      *  Prediction
@@ -122,12 +128,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     MatrixXd noise_covariance_Q = g * A_covariance_ * g_trans;
     ekf_.Q_ = noise_covariance_Q;
 
-
     ekf_.Predict();
+    float x = ekf_.x_(0);
+    float y = ekf_.x_(1);
     cout << "After prediction:" << endl;
     cout << "x_ = " << ekf_.x_ << endl;
     cout << "P_ = " << ekf_.P_ << endl;
-
 
     /*****************************************************************************
      *  Update
@@ -140,14 +146,21 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
      */
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
+        // Radar
         ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
         ekf_.R_ = R_radar_;
         ekf_.UpdateEKF(measurement_pack.raw_measurements_);
     } else {
-        // Laser updates
+        // Laser
         ekf_.H_ = H_laser_;
         ekf_.R_ = R_laser_;
         ekf_.Update(measurement_pack.raw_measurements_);
+    }
+
+    float xx = ekf_.x_(0);
+    float yy = ekf_.x_(1);
+    if (fabs(x - xx) > 5 || fabs(y - yy) > 5) {
+        cout << "Big change" << endl;
     }
 
     previous_timestamp_ = measurement_pack.timestamp_;
@@ -156,4 +169,5 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     cout << "After update:" << endl;
     cout << "x_ = " << ekf_.x_ << endl;
     cout << "P_ = " << ekf_.P_ << endl;
+
 }

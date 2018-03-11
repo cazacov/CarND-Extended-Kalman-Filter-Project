@@ -50,7 +50,7 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
     float vx = x_state(2);
     float vy = x_state(3);
 
-    const float epsilon = 1e-6;
+    const float epsilon = 1e-4;
 
     float xy2 = x *x + y * y;
     float xy12 = sqrt(xy2);
