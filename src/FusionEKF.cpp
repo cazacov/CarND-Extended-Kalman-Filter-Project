@@ -22,9 +22,10 @@ FusionEKF::FusionEKF() {
   H_laser_ = MatrixXd(2, 4);
   Hj_ = MatrixXd(3, 4);
 
-  float noise_ax = 9;
-  float noise_ay = 9;
+  double noise_ax = 9;
+  double noise_ay = 9;
 
+  // We will need it to estimate process noise in prediction step
   A_covariance_ = MatrixXd(2, 2);
   A_covariance_ <<  noise_ax, 0,
                     0, noise_ay;
@@ -80,7 +81,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     }
 
     /**
-      Initialize state.
+      Initialize state vector
     */
     VectorXd state_X = VectorXd(4);
     state_X << x, y, vx, vy;
@@ -104,13 +105,15 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    ****************************************************************************/
 
   float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;  //dt - expressed in seconds
+  previous_timestamp_ = measurement_pack.timestamp_;
 
+  // Calculate state transition matrix using new delta t
   MatrixXd state_transition_F = MatrixXd::Identity(4, 4);
   state_transition_F(0, 2) = dt;
   state_transition_F(1, 3) = dt;
   ekf_.F_ = state_transition_F;
 
-  // Estimate Q
+  // Estimate process noise covariance
   float dt_2 = dt * dt;
   MatrixXd g = MatrixXd(4, 2);
   g <<    dt_2 / 2, 0,
@@ -121,9 +124,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   MatrixXd noise_covariance_Q = g * A_covariance_ * g_trans;
   ekf_.Q_ = noise_covariance_Q;
 
+  // Predict new state
   ekf_.Predict();
-  double x = ekf_.x_[0];
-  double y = ekf_.x_[1];
 
   /*****************************************************************************
    *  Update
@@ -133,26 +135,18 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // Radar
     ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
     ekf_.R_ = R_radar_;
+
+    // Update with new measurement
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
   } else {
     // Laser
     ekf_.H_ = H_laser_;
     ekf_.R_ = R_laser_;
+    // Update with new measurement
     ekf_.Update(measurement_pack.raw_measurements_);
   }
 
-  double xx = ekf_.x_[0];
-  double yy = ekf_.x_[1];
-  if (fabs(x - xx) > 5 || fabs(y - yy) > 5) {
-    // For debugging
-    cout << "Big change" << endl;
-  }
-
-  previous_timestamp_ = measurement_pack.timestamp_;
-
   // print the output
-  cout << "After update:" << endl;
   cout << "x_ = " << ekf_.x_ << endl;
   cout << "P_ = " << ekf_.P_ << endl;
-
 }
