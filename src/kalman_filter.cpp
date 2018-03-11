@@ -33,30 +33,53 @@ void KalmanFilter::Update(const VectorXd &z) {
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
-  // Normalize input data
-  double in_rho = z[0];
-  double in_theta = z[1];
-  double in_drho = z[2];
-  while (in_theta > M_PI) {
-    in_theta -= 2 * M_PI;
-  }
-  while (in_theta < -M_PI) {
-    in_theta += 2 * M_PI;
-  }
-  VectorXd z_in = VectorXd(3);
-  z_in << in_rho, in_theta, in_drho;
-
   // Convert state vector to radar coordinate system
   double px = x_(0);
   double py = x_(1);
   double pvx = x_(2);
   double pvy = x_(3);
 
-  double rho = sqrt(px * px + py * py);
-  double theta = atan2(py, px);
-  double drho = (px * pvx + py * pvy) / sqrt(px * px + py * py);
+  double p_rho = sqrt(px * px + py * py);
+  double p_theta = atan2(py, px);
+  double p_rho_dot = (px * pvx + py * pvy) / sqrt(px * px + py * py);
   VectorXd z_pred = VectorXd(3);
-  z_pred << rho, theta, drho;
+  z_pred << p_rho, p_theta, p_rho_dot;
+
+
+  double in_rho = z[0];
+  double in_theta = z[1];
+  double in_rho_dot = z[2];
+
+  // Normalize in_theta
+  while (in_theta > M_PI) {
+    in_theta -= 2 * M_PI;
+  }
+  while (in_theta < -M_PI) {
+    in_theta += 2 * M_PI;
+  }
+
+  // Make algorithm more stable if theta is near +PI or -PI
+
+  if (fabs(in_theta) > M_PI /2 && fabs(p_theta) > M_PI /2){
+    // Both measured and predicted angles are in the rear semi-plane
+
+    if (in_theta * p_theta < 0) {
+      // Prediction and measurement have different signs
+
+        if (p_theta > 0)
+        {
+          in_theta += 2 * M_PI;
+        }
+        else {
+          in_theta -= 2 * M_PI;
+        }
+    }
+  }
+
+  VectorXd z_in = VectorXd(3);
+  z_in << in_rho, in_theta, in_rho_dot;
+
+
 
   VectorXd y = z_in - z_pred;
 
