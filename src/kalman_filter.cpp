@@ -52,8 +52,48 @@ void KalmanFilter::Update(const VectorXd &z) {
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
-  /**
-  TODO:
-    * update the state by using Extended Kalman Filter equations
-  */
+
+    cout << "UpdateEKF" << endl;
+
+    float px = x_[0];
+    float py = x_[1];
+    float pvx = x_[2];
+    float pvy = x_[3];
+
+    float rho = sqrt(px*px + py * py);
+    float theta = atan(py / px);
+    float drho = (px*pvx + py * pvx) / sqrt(px*px + py*py);
+
+    // normalize angle
+    while (theta > M_PI){
+        theta -= 2 * M_PI;
+    }
+    while (theta < -M_PI){
+        theta += 2 * M_PI;
+    }
+
+    VectorXd z_pred = VectorXd(3);
+    z_pred << rho, theta, drho;
+
+    cout << "z: " << z << endl;
+    cout << "z_pred: " << z_pred << endl;
+
+    VectorXd y = z - z_pred;
+    cout << "y: " << y << endl;
+
+    MatrixXd Ht = H_.transpose();
+    MatrixXd S = H_ * P_ * Ht + R_;
+    MatrixXd Si = S.inverse();
+    MatrixXd PHt = P_ * Ht;
+    MatrixXd K = PHt * Si;
+
+    cout << "Kalman gain: " << K << endl;
+
+
+    //new estimate
+    x_ = x_ + (K * y);
+    long x_size = x_.size();
+    MatrixXd I = MatrixXd::Identity(x_size, x_size);
+    P_ = (I - K * H_) * P_;
+
 }
