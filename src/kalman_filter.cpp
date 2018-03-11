@@ -63,22 +63,27 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     float rho = sqrt(px*px + py * py);
     float theta = atan2(py, px);
     float drho = (px*pvx + py * pvy) / sqrt(px*px + py*py);
-
-    // normalize angle
-    while (theta > M_PI){
-        theta -= 2 * M_PI;
-    }
-    while (theta < -M_PI){
-        theta += 2 * M_PI;
-    }
-
     VectorXd z_pred = VectorXd(3);
     z_pred << rho, theta, drho;
+
+    float in_rho = z(0);
+    float in_theta = z(1);
+    float in_drho = z(2);
+    while (in_theta > M_PI)
+    {
+        in_theta -= 2*M_PI;
+    }
+    while (in_theta < -M_PI)
+    {
+        in_theta += 2*M_PI;
+    }
+    VectorXd z_in = VectorXd(3);
+    z_in << in_rho, in_theta, in_drho;
 
     cout << "z: " << z << endl;
     cout << "z_pred: " << z_pred << endl;
 
-    VectorXd y = z - z_pred;
+    VectorXd y = z_in - z_pred;
     cout << "y: " << y << endl;
 
     MatrixXd Ht = H_.transpose();

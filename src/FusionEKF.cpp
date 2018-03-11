@@ -159,7 +159,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     float xx = ekf_.x_(0);
     float yy = ekf_.x_(1);
-    if (fabs(x - xx) > 5 || fabs(y - yy) > 5) {
+    if (fabs(x - xx) > 3 || fabs(y - yy) > 3) {
         cout << "Big change" << endl;
     }
 
