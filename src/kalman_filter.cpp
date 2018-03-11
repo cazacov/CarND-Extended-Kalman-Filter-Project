@@ -62,7 +62,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
     float rho = sqrt(px*px + py * py);
     float theta = atan(py / px);
-    float drho = (px*pvx + py * pvx) / sqrt(px*px + py*py);
+    float drho = (px*pvx + py * pvy) / sqrt(px*px + py*py);
 
     // normalize angle
     while (theta > M_PI){
