@@ -22,6 +22,13 @@ FusionEKF::FusionEKF() {
     H_laser_ = MatrixXd(2, 4);
     Hj_ = MatrixXd(3, 4);
 
+    float noise_ax = 9;
+    float noise_ay = 9;
+
+    A_covariance_  = MatrixXd(2,2);
+    A_covariance_ << noise_ax, 0,
+                    0, noise_ay;
+
     //measurement covariance matrix - laser
     R_laser_ << 0.0225, 0,
             0, 0.0225;
@@ -103,38 +110,16 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     state_transition_F(1, 3) = dt;
     ekf_.F_ = state_transition_F;
 
-    float noise_ax = 9;
-    float noise_ay = 9;
-
-    /*
-    auto acceleration_covariance_A = MatrixXd(2,2);
-    acceleration_covariance_A << noise_ax, 0,
-                                 0, noise_ay;
-
+    // Estimate Q
     float dt_2 = dt * dt;
-    auto g = MatrixXd(4,2);
+    MatrixXd g = MatrixXd(4,2);
     g << dt_2 / 2.0,  0,
            0,   dt_2 / 2.0,
            dt,  0,
            0,   dt;
-    auto g_trans = g.transpose();
+    MatrixXd g_trans = g.transpose();
 
-
-    MatrixXd noise_covariance_Q = g * acceleration_covariance_A * g_trans;
-    */
-
-    float dt_2 = dt * dt;
-    float dt_3 = dt_2 * dt;
-    float dt_4 = dt_3 * dt;
-
-    MatrixXd noise_covariance_Q = MatrixXd(4,4);
-
-    noise_covariance_Q <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
-                            0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
-                            dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
-                            0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
-
-
+    MatrixXd noise_covariance_Q = g * A_covariance_ * g_trans;
     ekf_.Q_ = noise_covariance_Q;
 
 
